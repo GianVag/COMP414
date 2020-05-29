@@ -1,0 +1,63 @@
+{% extends "template.html" %}
+{% block title %} | Tic Tac Toe {% endblock %} 
+
+{% block content %}
+
+<div class="row justify-content-center">
+	<div calss="col-12">
+	{% for x in range(0,3) %}
+
+		<div class="row justify-content-center">
+		{% for y in range(0,3) %}
+			<div class="col" align="center">
+				<button id="{{x*3 + y}}" class="btn btn-primary">{{'x' if board[x][y] == -1 else ('o' if board[x][y] == 1 else '')}}</button>
+			</div>
+		{% endfor %}
+		</div>
+
+	{% endfor %}
+	</div>
+</div>
+
+<ul id="messages"></ul>
+<ul id="brd"></ul>
+{% endblock %}
+
+{% block js %}
+<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+<script type="text/javascript">
+	$(document).ready(function(){
+		var socket = io.connect('http://'+location.host);
+		socket.on('connect', function() {
+			socket.emit('connected', '{{session['id']}}');
+		});
+
+		socket.on('message', function(msg) {
+			$('#messages').append('<li>'+msg+'</li>');
+		});
+
+		socket.on('board', function(board) {
+			for (var i = 0; i <3; i++) {
+				for (var j = 0; j < 3; j++) {
+					$('#'+(i*3+j)).html(board[i][j]==-1?'x':(board[i][j]==1?'o':' '))
+				}
+			}
+			//$('#brd').append('<li>'+board+'</li>')
+		});
+
+		$('#sendbutton').on('click', function(){
+			socket.send($('#tst').val());
+			$('#tst').val('');
+		});
+
+		$('button.btn').on('click', function(){
+			var id = $(this).attr('id');
+			var x = parseInt(id/3);
+			console.log(x);
+			var y = id%3;
+			data = {'id' : '{{session['id']}}', 'game' : '{{session['game']}}', 'x' : x, 'y' : y};
+			socket.emit('makeMove', data);
+		});
+	});
+</script>
+{% endblock %}

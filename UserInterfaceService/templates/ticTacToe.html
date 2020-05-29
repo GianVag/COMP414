@@ -1,0 +1,65 @@
+{% extends "template.html" %}
+{% block title %} | Tic Tac Toe {% endblock %} 
+
+{% block content %}
+<ul>
+	<div class="form-group">
+		<button id="joinPractice" class="btn btn-primary">Join Practice</button>
+	</div>
+	<li><a class="link" href="/TicTacToe/joinPractice">Join waiting list.</a></li>
+	
+	<li><a class="link" href="/TicTacToe/rules">Read the rules.</a></li>
+</ul>
+
+<ul>
+	{% for (k,game) in games.items() %}
+	<li><a class="link" href="/TicTacToe/{{game['game']}}">Game {{game['game']}}</a></li>
+	{% endfor %}
+</ul>
+<ul id="messages"></ul>
+<input type="text" id="tst">
+<button id="sendbutton">Send</button>
+<button id="playsbutton">Get Plays</button>
+{% endblock %}
+
+{% block js %}
+<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+<script type="text/javascript">
+	var input = document.getElementById("tst");
+
+	// Execute a function when the user releases a key on the keyboard
+	input.addEventListener("keyup", function(event) {
+	  // Number 13 is the "Enter" key on the keyboard
+	  if (event.keyCode === 13) {
+	    // Cancel the default action, if needed
+	    event.preventDefault();
+	    // Trigger the button element with a click
+	    document.getElementById("sendbutton").click();
+	  }
+	});
+
+	$(document).ready(function(){
+		var socket = io.connect('http://'+location.host);
+		socket.on('connect', function() {
+			socket.emit('connected', '{{session['username']}}');
+		});
+
+		socket.on('message', function(msg) {
+			$('#messages').append('<li>'+msg+'</li>');
+		});
+
+		$('#joinPractice').on('click', function(){
+			socket.emit('joinPractice', {'id' : '{{session['id']}}', 'username' : '{{session['username']}}', 'game' : 1});
+		});
+
+		$('#sendbutton').on('click', function(){
+			socket.send($('#tst').val());
+			$('#tst').val('');
+		});
+
+		$('#playsbutton').on('click', function(){
+			socket.emit('getPlays', {'id' : '{{session['id']}}', 'username' : '{{session['username']}}', 'game' : 1});
+		});
+	});
+</script>
+{% endblock %}
